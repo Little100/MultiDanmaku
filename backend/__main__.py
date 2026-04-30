@@ -1,4 +1,4 @@
-"""Entry point: python -m backend
+"""Entry point: python -m backend (or MultiDanmaku.exe)
 
 Starts the MultiDanmaku server on 127.0.0.1:9800 by default.
 OBS browser source should connect to http://127.0.0.1:9800
@@ -26,8 +26,11 @@ def main() -> None:
             file=sys.stderr,
         )
 
+    # Import app directly so PyInstaller can resolve it
+    from backend.app import app  # noqa: F811
+
     uvicorn.run(
-        "backend.app:app",
+        app,
         host=args.host,
         port=args.port,
         reload=args.reload,
