@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MultiDanmaku - 管理面板</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #f7f6f3;
+      --surface: #ffffff;
+      --text: #1a1a1a;
+      --text-2: #555;
+      --text-3: #999;
+      --border: #e5e3de;
+      --border-hover: #d0cec8;
+      --accent: #2563eb;
+      --accent-hover: #1d4ed8;
+      --accent-light: #eff6ff;
+      --green: #16a34a;
+      --green-bg: #f0fdf4;
+      --red: #dc2626;
+      --red-bg: #fef2f2;
+      --radius: 8px;
+      --font: 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+    }
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    /* Token gate */
+    #token-gate {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+      padding: 24px;
+    }
+    #token-gate h1 { font-size: 22px; font-weight: 700; }
+    #token-gate p { color: var(--text-2); font-size: 14px; }
+    #token-gate .token-field { display: flex; gap: 8px; margin-top: 8px; }
+    #token-gate input {
+      width: 280px; padding: 10px 14px; border: 1px solid var(--border);
+      border-radius: var(--radius); font-size: 14px; font-family: var(--font);
+      outline: none; background: var(--surface);
+    }
+    #token-gate input:focus { border-color: var(--accent); }
+    #token-gate .error { color: var(--red); font-size: 13px; display: none; }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+      padding: 9px 20px; border: 1px solid var(--border); border-radius: var(--radius);
+      font-size: 13px; font-weight: 600; font-family: var(--font);
+      cursor: pointer; background: var(--surface); color: var(--text);
+      transition: background 0.15s, border-color 0.15s; user-select: none;
+    }
+    .btn:hover { background: var(--bg); border-color: var(--border-hover); }
+    .btn-accent { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+    .btn-ghost { background: transparent; border-color: transparent; color: var(--text-2); }
+    .btn-ghost:hover { background: var(--bg); color: var(--text); }
+    .btn-sm { padding: 6px 12px; font-size: 12px; }
+
+    /* Header */
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 0 28px; height: 54px;
+      display: flex; align-items: center; gap: 20px;
+    }
+    header .logo { font-size: 16px; font-weight: 700; color: var(--text); }
+    header .logo span { color: var(--text-3); font-weight: 400; font-size: 13px; margin-left: 6px; }
+    header nav { display: flex; gap: 4px; margin-left: 20px; }
+    header nav a {
+      padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 500;
+      color: var(--text-2); text-decoration: none; transition: background 0.15s, color 0.15s;
+    }
+    header nav a:hover { background: var(--bg); color: var(--text); }
+    header nav a.active { background: var(--accent-light); color: var(--accent); }
+    header .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+    header .ws-status { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-3); }
+    header .ws-dot { width: 7px; height: 7px; border-radius: 50%; background: #ccc; }
+    header .ws-dot.on { background: var(--green); }
+    header .ws-dot.off { background: var(--red); }
+
+    /* Pages */
+    .page { display: none; }
+    .page.active { display: block; }
+    .page-body { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; }
+
+    /* Section */
+    .section { margin-bottom: 32px; }
+    .section-head {
+      display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px;
+    }
+    .section-head h2 { font-size: 15px; font-weight: 700; }
+    .section-head .hint { font-size: 12px; color: var(--text-3); }
+
+    /* Card */
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 18px;
+    }
+    .card + .card { margin-top: 10px; }
+
+    /* Platform row */
+    .plat-row {
+      display: flex; align-items: center; gap: 12px; padding: 12px 0;
+    }
+    .plat-row + .plat-row { border-top: 1px solid var(--border); }
+    .plat-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .plat-name { font-size: 14px; font-weight: 600; width: 70px; flex-shrink: 0; }
+    .plat-input {
+      flex: 1; padding: 8px 12px; border: 1px solid var(--border);
+      border-radius: 6px; font-size: 13px; font-family: var(--font);
+      outline: none; background: var(--bg); transition: border-color 0.15s, background 0.15s;
+    }
+    .plat-input:focus { border-color: var(--accent); background: var(--surface); }
+    .plat-input::placeholder { color: var(--text-3); }
+
+    /* Toggle */
+    .toggle { position: relative; width: 38px; height: 20px; flex-shrink: 0; }
+    .toggle input { opacity: 0; width: 0; height: 0; position: absolute; }
+    .toggle .slider {
+      position: absolute; inset: 0; background: #d4d2cc;
+      border-radius: 20px; cursor: pointer; transition: background 0.2s;
+    }
+    .toggle .slider::before {
+      content: ""; position: absolute; width: 16px; height: 16px;
+      left: 2px; bottom: 2px; background: #fff; border-radius: 50%;
+      transition: transform 0.2s; box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+    }
+    .toggle input:checked + .slider { background: var(--accent); }
+    .toggle input:checked + .slider::before { transform: translateX(18px); }
+
+    /* Form fields */
+    .field { margin-bottom: 14px; }
+    .field:last-child { margin-bottom: 0; }
+    .field-label {
+      display: block; font-size: 12px; font-weight: 600; color: var(--text-2); margin-bottom: 5px;
+    }
+    .field-input, .field-select, .field-textarea {
+      width: 100%; padding: 8px 12px; border: 1px solid var(--border);
+      border-radius: 6px; font-size: 13px; font-family: var(--font);
+      outline: none; background: var(--bg); transition: border-color 0.15s, background 0.15s;
+    }
+    .field-input:focus, .field-select:focus, .field-textarea:focus {
+      border-color: var(--accent); background: var(--surface);
+    }
+    .field-textarea {
+      resize: vertical; min-height: 70px;
+      font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace;
+      font-size: 12px; line-height: 1.55;
+    }
+    .field-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .field-hint { font-size: 11px; color: var(--text-3); margin-top: 4px; }
+
+    /* Platform display customization */
+    .display-grid {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px;
+    }
+    .display-card {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 14px; background: var(--bg);
+    }
+    .display-card .dc-header {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 12px;
+    }
+    .display-card .dc-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .display-card .dc-name { font-size: 13px; font-weight: 700; }
+    .display-card .dc-toggle { margin-left: auto; }
+    .display-card .dc-field { margin-bottom: 10px; }
+    .display-card .dc-field:last-child { margin-bottom: 0; }
+    .display-card .dc-label { font-size: 11px; color: var(--text-3); margin-bottom: 3px; }
+    .display-card .dc-input {
+      width: 100%; padding: 6px 8px; border: 1px solid var(--border);
+      border-radius: 5px; font-size: 12px; font-family: var(--font);
+      outline: none; background: var(--surface);
+    }
+    .display-card .dc-input:focus { border-color: var(--accent); }
+    .display-card .dc-color-row { display: flex; gap: 6px; align-items: center; }
+    .display-card .dc-color-row input[type="color"] {
+      width: 32px; height: 30px; border: 1px solid var(--border);
+      border-radius: 5px; padding: 2px; cursor: pointer; background: var(--surface);
+    }
+    .display-card .dc-color-row .dc-input { flex: 1; }
+    .display-card .dc-icon-row { display: flex; gap: 6px; align-items: center; }
+    .display-card .dc-icon-row .dc-input { flex: 1; }
+    .display-card .dc-preview { margin-top: 6px; }
+    .display-card .dc-preview img { max-height: 28px; max-width: 80px; border-radius: 3px; vertical-align: middle; }
+    .upload-btn { padding: 6px 10px !important; font-size: 11px !important; white-space: nowrap; }
+
+    /* Live feed */
+    .feed-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+    .chip {
+      padding: 5px 14px; border-radius: 20px; font-size: 12px; font-weight: 500;
+      cursor: pointer; border: 1px solid var(--border); background: transparent;
+      color: var(--text-2); transition: all 0.15s; font-family: var(--font);
+    }
+    .chip:hover { border-color: var(--border-hover); color: var(--text); }
+    .chip.on { background: var(--text); color: #fff; border-color: var(--text); }
+    .chip.on[data-filter="bilibili"]  { background: #00a1d6; border-color: #00a1d6; }
+    .chip.on[data-filter="douyin"]    { background: #fe2c55; border-color: #fe2c55; }
+    .chip.on[data-filter="kuaishou"]  { background: #ff6600; border-color: #ff6600; }
+
+    .feed-list {
+      border: 1px solid var(--border); border-radius: var(--radius);
+      background: var(--surface); height: 520px; overflow-y: auto;
+      scrollbar-width: thin;
+    }
+    .feed-list::-webkit-scrollbar { width: 6px; }
+    .feed-list::-webkit-scrollbar-thumb { background: #d4d2cc; border-radius: 3px; }
+
+    .feed-empty {
+      display: flex; align-items: center; justify-content: center;
+      height: 100%; color: var(--text-3); font-size: 13px;
+    }
+
+    .feed-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 14px; border-bottom: 1px solid #f0efec;
+      font-size: 13px; animation: item-in 0.2s ease-out;
+    }
+    .feed-item:last-child { border-bottom: none; }
+
+    .feed-item .f-avatar {
+      width: 28px; height: 28px; border-radius: 50%; background: #eee;
+      flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; color: #aaa; overflow: hidden;
+    }
+    .feed-item .f-avatar img { width: 100%; height: 100%; object-fit: cover; border-radius: 50%; }
+
+    .feed-item .f-badge {
+      padding: 2px 7px; border-radius: 4px; font-size: 10px;
+      font-weight: 600; color: #fff; flex-shrink: 0;
+    }
+    .feed-item .f-type {
+      padding: 2px 5px; border-radius: 3px; font-size: 9px; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.4px; flex-shrink: 0;
+      background: #f0efec; color: var(--text-3);
+    }
+    .f-type.gift  { background: #fff3e0; color: #e65100; }
+    .f-type.enter { background: #f3e5f5; color: #7b1fa2; }
+    .f-type.like  { background: #fce4ec; color: #c62828; }
+
+    .feed-item .f-user {
+      font-weight: 600; color: var(--text); flex-shrink: 0;
+      max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .feed-item .f-content {
+      flex: 1; color: var(--text-2); overflow: hidden;
+      text-overflow: ellipsis; white-space: nowrap;
+    }
+    .feed-item .f-time {
+      flex-shrink: 0; font-size: 11px; color: var(--text-3);
+      font-variant-numeric: tabular-nums;
+    }
+
+    @keyframes item-in {
+      from { opacity: 0; transform: translateY(-4px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed; bottom: 24px; right: 24px;
+      padding: 10px 20px; border-radius: var(--radius);
+      font-size: 13px; font-weight: 500; color: #fff;
+      background: var(--green); box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+      transform: translateY(20px); opacity: 0; transition: all 0.25s; z-index: 100;
+    }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.error { background: var(--red); }
+  </style>
+</head>
+<body>
+
+  <!-- Token gate -->
+  <div id="token-gate">
+    <h1>MultiDanmaku</h1>
+    <p>此服务器需要访问令牌</p>
+    <div class="token-field">
+      <input type="password" id="token-input" placeholder="输入访问令牌..." autocomplete="off" />
+      <button class="btn btn-accent" id="token-submit">确认</button>
+    </div>
+    <div class="error" id="token-error">令牌无效，请重试。</div>
+  </div>
+
+  <!-- Main app -->
+  <div id="app" style="display:none">
+    <header>
+      <div class="logo">MultiDanmaku<span>管理面板</span></div>
+      <nav>
+        <a href="#" class="active" data-page="config">配置</a>
+        <a href="#" data-page="display">展示</a>
+        <a href="#" data-page="feed">实时消息</a>
+      </nav>
+      <div class="header-right">
+        <div class="ws-status">
+          <span class="ws-dot" id="ws-dot"></span>
+          <span id="ws-label">未连接</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Config page -->
+    <div class="page active" id="page-config">
+      <div class="page-body">
+
+        <div class="section">
+          <div class="section-head">
+            <h2>平台</h2>
+            <span class="hint">启用平台并输入房间号即可开始接收消息</span>
+          </div>
+          <div class="card">
+            <div class="plat-row">
+              <span class="plat-dot" id="dot-bilibili" style="background:#00a1d6"></span>
+              <span class="plat-name">B站</span>
+              <input type="text" class="plat-input" id="bilibili-room" placeholder="房间号 或 身份码" />
+              <a href="https://play-live.bilibili.com/" target="_blank" rel="noopener" class="btn btn-ghost btn-sm" title="获取身份码" style="padding:4px 8px;font-size:11px;text-decoration:none;flex-shrink:0">点我跳转获取身份码</a>
+              <label class="toggle">
+                <input type="checkbox" id="bilibili-enabled" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <details style="margin:4px 0 0 22px">
+              <summary style="font-size:11px;color:var(--text-3);cursor:pointer;user-select:none">chat.vrp.moe OBS 地址（最快捷）</summary>
+              <div style="margin-top:8px">
+                <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">OBS URL</div>
+                <input type="text" class="plat-input" id="bilibili-chat-url" placeholder="https://chat.vrp.moe/obs/..." style="width:100%" />
+                <div style="font-size:10px;color:var(--text-3);margin-top:4px">
+                  从 <a href="https://chat.vrp.moe/" target="_blank" rel="noopener" style="color:var(--accent)">chat.vrp.moe</a> 获取 OBS 地址后粘贴到这里。填了此项优先使用，无需凭证。
+                </div>
+              </div>
+            </details>
+            <details style="margin:4px 0 0 22px">
+              <summary style="font-size:11px;color:var(--text-3);cursor:pointer;user-select:none">B站开放平台凭证（身份码专用）</summary>
+              <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px">
+                <div>
+                  <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">App ID</div>
+                  <input type="text" class="plat-input" id="bilibili-ol-appid" placeholder="如 278xxxx" style="width:100%" />
+                </div>
+                <div>
+                  <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">Access Key</div>
+                  <input type="text" class="plat-input" id="bilibili-ol-key" placeholder="access_key_id" style="width:100%" />
+                </div>
+                <div>
+                  <div style="font-size:11px;color:var(--text-3);margin-bottom:3px">Access Secret</div>
+                  <input type="password" class="plat-input" id="bilibili-ol-secret" placeholder="access_key_secret" style="width:100%" />
+                </div>
+              </div>
+              <div style="font-size:10px;color:var(--text-3);margin-top:6px">
+                前往 <a href="https://open-live.bilibili.com/" target="_blank" rel="noopener" style="color:var(--accent)">open-live.bilibili.com</a> 注册开发者获取。数字房间号不需要填写。
+              </div>
+            </details>
+            <div class="plat-row">
+              <span class="plat-dot" id="dot-douyin" style="background:#fe2c55"></span>
+              <span class="plat-name">抖音</span>
+              <input type="text" class="plat-input" id="douyin-room" placeholder="房间号或 Web RID" />
+              <label class="toggle">
+                <input type="checkbox" id="douyin-enabled" />
+                <span class="slider"></span>
+              </label>
+            </div>
+            <div class="plat-row">
+              <span class="plat-dot" id="dot-kuaishou" style="background:#ff6600"></span>
+              <span class="plat-name">快手</span>
+              <input type="text" class="plat-input" id="kuaishou-room" placeholder="房间号或用户 ID" />
+              <label class="toggle">
+                <input type="checkbox" id="kuaishou-enabled" />
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <h2>过滤</h2>
+            <span class="hint">匹配以下规则的消息将被隐藏</span>
+          </div>
+          <div class="card">
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label">屏蔽关键词</label>
+                <textarea class="field-textarea" id="filter-keywords" rows="3" placeholder="每行一个"></textarea>
+                <div class="field-hint">包含这些关键词的消息将被过滤</div>
+              </div>
+              <div class="field">
+                <label class="field-label">屏蔽用户</label>
+                <textarea class="field-textarea" id="blacklist-users" rows="3" placeholder="每行一个"></textarea>
+              </div>
+            </div>
+            <div class="field" style="max-width:200px;margin-top:10px">
+              <label class="field-label" for="min-content-length">最短内容长度</label>
+              <input type="number" class="field-input" id="min-content-length" value="0" min="0" />
+              <div class="field-hint">设为 0 表示不限制</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <h2>安全</h2>
+            <span class="hint">服务器暴露到公网时使用</span>
+          </div>
+          <div class="card">
+            <div class="field" style="max-width:360px">
+              <label class="field-label" for="token-field">访问令牌</label>
+              <input type="text" class="field-input" id="token-field" placeholder="留空表示不启用" />
+              <div class="field-hint">设置后访问管理面板和配置 API 需要此令牌。OBS 页面和 WebSocket 不受影响。</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:8px">
+          <button class="btn btn-accent" id="btn-save">保存配置</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Display page -->
+    <div class="page" id="page-display">
+      <div class="page-body">
+
+        <div class="section">
+          <div class="section-head">
+            <h2>平台展示</h2>
+            <span class="hint">自定义每个平台在弹幕中的显示名称、颜色和图标</span>
+          </div>
+          <div class="display-grid" id="platform-display-grid">
+            <!-- Bilibili -->
+            <div class="display-card" data-platform="bilibili">
+              <div class="dc-header">
+                <span class="dc-dot" style="background:#00a1d6"></span>
+                <span class="dc-name">B站</span>
+                <label class="toggle dc-toggle">
+                  <input type="checkbox" class="disp-visible" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="dc-field">
+                <div class="dc-label">显示名称</div>
+                <input type="text" class="dc-input disp-label" placeholder="B站" />
+              </div>
+              <div class="dc-field">
+                <div class="dc-label">主题色</div>
+                <div class="dc-color-row">
+                  <input type="color" class="disp-color-picker" value="#00a1d6" />
+                  <input type="text" class="dc-input disp-color" placeholder="#00a1d6" />
+                </div>
+              </div>
+              <div class="dc-field">
+                <div class="dc-label">图标</div>
+                <div class="dc-icon-row">
+                  <input type="text" class="dc-input disp-icon" placeholder="留空使用文字标签" />
+                  <label class="btn btn-sm upload-btn">
+                    上传
+                    <input type="file" class="icon-upload" accept="image/*" style="display:none" />
+                  </label>
+                </div>
+                <div class="dc-preview"></div>
+              </div>
+            </div>
+            <!-- Douyin -->
+            <div class="display-card" data-platform="douyin">
+              <div class="dc-header">
+                <span class="dc-dot" style="background:#fe2c55"></span>
+                <span class="dc-name">抖音</span>
+                <label class="toggle dc-toggle">
+                  <input type="checkbox" class="disp-visible" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="dc-field">
+                <div class="dc-label">显示名称</div>
+                <input type="text" class="dc-input disp-label" placeholder="抖音" />
+              </div>
+              <div class="dc-field">
+                <div class="dc-label">主题色</div>
+                <div class="dc-color-row">
+                  <input type="color" class="disp-color-picker" value="#fe2c55" />
+                  <input type="text" class="dc-input disp-color" placeholder="#fe2c55" />
+                </div>
+              </div>
+              <div class="dc-field">
+                <div class="dc-label">图标</div>
+                <div class="dc-icon-row">
+                  <input type="text" class="dc-input disp-icon" placeholder="留空使用文字标签" />
+                  <label class="btn btn-sm upload-btn">
+                    上传
+                    <input type="file" class="icon-upload" accept="image/*" style="display:none" />
+                  </label>
+                </div>
+                <div class="dc-preview"></div>
+              </div>
+            </div>
+            <!-- Kuaishou -->
+            <div class="display-card" data-platform="kuaishou">
+              <div class="dc-header">
+                <span class="dc-dot" style="background:#ff6600"></span>
+                <span class="dc-name">快手</span>
+                <label class="toggle dc-toggle">
+                  <input type="checkbox" class="disp-visible" checked />
+                  <span class="slider"></span>
+                </label>
+              </div>
+              <div class="dc-field">
+                <div class="dc-label">显示名称</div>
+                <input type="text" class="dc-input disp-label" placeholder="快手" />
+              </div>
+              <div class="dc-field">
+                <div class="dc-label">主题色</div>
+                <div class="dc-color-row">
+                  <input type="color" class="disp-color-picker" value="#ff6600" />
+                  <input type="text" class="dc-input disp-color" placeholder="#ff6600" />
+                </div>
+              </div>
+              <div class="dc-field">
+                <div class="dc-label">图标</div>
+                <div class="dc-icon-row">
+                  <input type="text" class="dc-input disp-icon" placeholder="留空使用文字标签" />
+                  <label class="btn btn-sm upload-btn">
+                    上传
+                    <input type="file" class="icon-upload" accept="image/*" style="display:none" />
+                  </label>
+                </div>
+                <div class="dc-preview"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <h2>显示设置</h2>
+          </div>
+          <div class="card">
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label" for="max-messages">最大消息数</label>
+                <input type="number" class="field-input" id="max-messages" value="200" min="10" max="2000" />
+                <div class="field-hint">超出后自动移除最旧的消息</div>
+              </div>
+              <div class="field">
+                <label class="field-label" for="scroll-direction">新消息出现在</label>
+                <select class="field-select" id="scroll-direction">
+                  <option value="up">底部（默认）</option>
+                  <option value="down">顶部</option>
+                </select>
+              </div>
+            </div>
+            <div class="field-row" style="margin-top:12px">
+              <div class="field">
+                <label class="field-label">
+                  <input type="checkbox" id="show-platform-badge" checked style="margin-right:6px" />
+                  显示平台标签
+                </label>
+              </div>
+              <div class="field">
+                <label class="field-label">
+                  <input type="checkbox" id="show-timestamp" style="margin-right:6px" />
+                  显示时间戳
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="section">
+          <div class="section-head">
+            <h2>自定义 CSS</h2>
+            <span class="hint">注入到 OBS 源页面，可覆盖 .msg、.bubble、.avatar 等样式</span>
+          </div>
+          <div class="card">
+            <textarea class="field-textarea" id="custom-css" rows="6"
+              placeholder="/* 示例: */&#10;.bubble { font-size: 18px; }&#10;.msg .username { color: gold; }"></textarea>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;padding-top:8px">
+          <button class="btn btn-accent" id="btn-save-display">保存展示配置</button>
+        </div>
+
+        <div class="section" style="margin-top:36px">
+          <div class="section-head">
+            <h2>测试</h2>
+            <span class="hint">发送测试消息验证显示效果</span>
+          </div>
+          <div class="card">
+            <div class="field-row">
+              <div class="field">
+                <label class="field-label" for="test-platform">平台</label>
+                <select class="field-select" id="test-platform">
+                  <option value="bilibili">B站</option>
+                  <option value="douyin">抖音</option>
+                  <option value="kuaishou">快手</option>
+                </select>
+              </div>
+              <div class="field">
+                <label class="field-label" for="test-username">用户名</label>
+                <input type="text" class="field-input" id="test-username" value="测试用户" />
+              </div>
+            </div>
+            <div class="field" style="margin-top:10px">
+              <label class="field-label" for="test-content">消息内容</label>
+              <input type="text" class="field-input" id="test-content" value="这是一条测试弹幕消息" />
+            </div>
+            <div style="display:flex;gap:10px;margin-top:12px">
+              <button class="btn btn-accent" id="btn-test">发送测试消息</button>
+              <button class="btn" id="btn-open-overlay">打开桌面悬浮窗</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feed page -->
+    <div class="page" id="page-feed">
+      <div class="page-body">
+        <div class="section">
+          <div class="section-head">
+            <h2>实时消息</h2>
+            <span class="hint" id="history-count"></span>
+            <button class="btn btn-ghost btn-sm" id="btn-clear" style="margin-left:auto">清空</button>
+          </div>
+
+          <div class="feed-filters">
+            <button class="chip on" data-filter="all">全部</button>
+            <button class="chip" data-filter="bilibili">B站</button>
+            <button class="chip" data-filter="douyin">抖音</button>
+            <button class="chip" data-filter="kuaishou">快手</button>
+            <span style="width:1px;background:var(--border);margin:0 4px"></span>
+            <button class="chip" data-filter="danmaku">弹幕</button>
+            <button class="chip" data-filter="gift">礼物</button>
+            <button class="chip" data-filter="enter">进入</button>
+          </div>
+
+          <div class="feed-list" id="feed-list">
+            <div class="feed-empty" id="feed-empty">等待消息...</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="/admin.js"></script>
+</body>
+</html>

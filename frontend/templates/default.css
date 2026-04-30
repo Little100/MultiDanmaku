@@ -1,0 +1,264 @@
+/* LAPLACE Bubble style adapted for MultiDanmaku */
+/* Based on "LAPLACE Bubble Next x MingQianNaiLv" template */
+/* Requires CEF 127+ / OBS 31+ for full OKLCH + CSS Nesting support */
+
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&family=Inter:wght@400;500;600&display=swap');
+
+/* ---- Root variables ---- */
+:root {
+  --md-font: 'Inter', 'Noto Sans SC', 'PingFang SC', 'Microsoft YaHei', system-ui, sans-serif;
+  --md-bubble-green-bg: #f1fbf5;
+  --md-bubble-green-text: #213d2b;
+  --md-bubble-blue-bg:  #eef4fb;
+  --md-bubble-blue-text:#1a3a5c;
+  --md-bubble-pink-bg:  #fdf2f5;
+  --md-bubble-pink-text:#5c1a3a;
+  --md-bubble-orange-bg:#fdf6ee;
+  --md-bubble-orange-text:#5c3a1a;
+  --md-bubble-gift-bg:  #fff7e6;
+  --md-bubble-gift-text:#8b5e1a;
+  --md-bubble-enter-bg: #f0f0f5;
+  --md-bubble-enter-text:#555570;
+}
+
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: var(--md-font);
+}
+
+#danmaku-container {
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 5px;
+  padding: 10px 12px;
+  scrollbar-width: none;
+}
+
+#danmaku-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Fade edges so content doesn't clip hard */
+#danmaku-container {
+  --edge: 28px;
+  mask-image: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0),
+    rgba(0,0,0,1) var(--edge),
+    rgba(0,0,0,1) calc(100% - var(--edge)),
+    rgba(0,0,0,0)
+  );
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0),
+    rgba(0,0,0,1) var(--edge),
+    rgba(0,0,0,1) calc(100% - var(--edge)),
+    rgba(0,0,0,0)
+  );
+}
+
+/* ---- Single message row ---- */
+.msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  animation: bubble-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) 1;
+  transform-origin: left center;
+  width: fit-content;
+  max-width: 92%;
+}
+
+/* ---- Avatar ---- */
+.msg .avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: #e8e8ee;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #999;
+  overflow: hidden;
+  margin-top: 2px;
+}
+
+.msg .avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+/* ---- Chat bubble ---- */
+.msg .bubble {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 7px 14px;
+  border-radius: 16px;
+  min-width: 3em;
+  width: fit-content;
+  background: var(--md-bubble-green-bg);
+  color: var(--md-bubble-green-text);
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.06));
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Bubble tail (arrow pointing left) */
+.msg .bubble::before {
+  content: "";
+  position: absolute;
+  top: 10px;
+  left: -7px;
+  border: 7px solid transparent;
+  border-right: 10px solid var(--md-bubble-green-bg);
+  transform: rotate(30deg);
+  transition: border-color 0.3s;
+}
+
+/* ---- Meta line (badge + username) ---- */
+.msg .meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.msg .badge {
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  white-space: nowrap;
+  letter-spacing: 0.3px;
+}
+
+.badge-bilibili  { background: #00a1d6; }
+.badge-douyin    { background: #fe2c55; }
+.badge-kuaishou  { background: #ff6600; }
+
+.msg .event-type {
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  background: rgba(0,0,0,0.05);
+  color: inherit;
+  opacity: 0.7;
+  white-space: nowrap;
+}
+
+.msg .username {
+  font-size: 12px;
+  font-weight: 600;
+  color: inherit;
+  opacity: 0.85;
+}
+
+/* ---- Content ---- */
+.msg .content {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.45;
+  word-break: break-word;
+}
+
+/* ---- Timestamp ---- */
+.msg .timestamp {
+  font-size: 10px;
+  opacity: 0.35;
+  margin-left: auto;
+  padding-left: 8px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+/* ---- Platform-specific bubble tints ---- */
+.msg.platform-bilibili .bubble {
+  background: var(--md-bubble-blue-bg);
+  color: var(--md-bubble-blue-text);
+}
+.msg.platform-bilibili .bubble::before {
+  border-right-color: var(--md-bubble-blue-bg);
+}
+
+.msg.platform-douyin .bubble {
+  background: var(--md-bubble-pink-bg);
+  color: var(--md-bubble-pink-text);
+}
+.msg.platform-douyin .bubble::before {
+  border-right-color: var(--md-bubble-pink-bg);
+}
+
+.msg.platform-kuaishou .bubble {
+  background: var(--md-bubble-orange-bg);
+  color: var(--md-bubble-orange-text);
+}
+.msg.platform-kuaishou .bubble::before {
+  border-right-color: var(--md-bubble-orange-bg);
+}
+
+/* ---- Event type variants ---- */
+.msg.event-gift .bubble {
+  background: linear-gradient(135deg, #fff7e6, #ffefc2);
+  color: #7a5000;
+}
+.msg.event-gift .bubble::before {
+  border-right-color: #fff7e6;
+}
+
+.msg.event-enter .bubble {
+  background: var(--md-bubble-enter-bg);
+  color: var(--md-bubble-enter-text);
+}
+.msg.event-enter .bubble::before {
+  border-right-color: var(--md-bubble-enter-bg);
+}
+
+.msg.event-enter .content {
+  font-style: italic;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.msg.event-like .bubble {
+  background: #fdf0f5;
+  color: #8b1a4a;
+}
+.msg.event-like .bubble::before {
+  border-right-color: #fdf0f5;
+}
+
+/* ---- Animations ---- */
+@keyframes bubble-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5) translateY(8px);
+  }
+  60% {
+    transform: scale(1.03) translateY(-1px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}

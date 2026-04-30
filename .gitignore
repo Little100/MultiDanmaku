@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+*.spec
+*.exe
+.venv/
+venv/
+env/
+node_modules/
+config.json
+frontend/uploads/
+*.log
+.DS_Store
+Thumbs.db

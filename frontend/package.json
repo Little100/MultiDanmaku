@@ -1,0 +1,12 @@
+{
+  "name": "multidanmaku-frontend",
+  "private": true,
+  "scripts": {
+    "build": "esbuild src/app.ts --bundle --outfile=app.js --target=es2020 --format=iife --sourcemap",
+    "watch": "esbuild src/app.ts --bundle --outfile=app.js --target=es2020 --format=iife --sourcemap --watch"
+  },
+  "devDependencies": {
+    "esbuild": "^0.23.0",
+    "typescript": "^5.5.0"
+  }
+}
