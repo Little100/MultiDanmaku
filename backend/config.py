@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 import json
-import pathlib
 from dataclasses import dataclass, field
 from typing import Any
 
+from backend.paths import config_path
 
-CONFIG_PATH = pathlib.Path(__file__).resolve().parent.parent / "config.json"
+CONFIG_PATH = config_path()
 
 
 @dataclass

@@ -13,6 +13,13 @@ import uvicorn
 
 
 def main() -> None:
+    # Handle overlay subprocess re-invocation (must run before argparse)
+    if "--_run_overlay" in sys.argv:
+        from backend._overlay_window import run
+        url = sys.argv[sys.argv.index("--_run_overlay") + 1] if len(sys.argv) > sys.argv.index("--_run_overlay") + 1 else "http://127.0.0.1:9800/overlay"
+        run(url)
+        return
+
     parser = argparse.ArgumentParser(description="MultiDanmaku server")
     parser.add_argument("--host", default="127.0.0.1", help="Bind address (default: 127.0.0.1)")
     parser.add_argument("--port", type=int, default=9800, help="Bind port (default: 9800)")

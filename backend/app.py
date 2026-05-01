@@ -17,6 +17,7 @@ from backend.adapters.kuaishou import KuaishouAdapter
 from backend.adapters.base import BaseAdapter
 from backend.config import AppConfig, load_config, save_config
 from backend.services.aggregator import Aggregator
+from backend.paths import bundled_frontend, upload_dir
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(name)s] %(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -25,7 +26,8 @@ aggregator = Aggregator()
 config = load_config()
 active_adapters: dict[str, BaseAdapter] = {}
 
-FRONTEND_DIR = pathlib.Path(__file__).resolve().parent.parent / "frontend"
+FRONTEND_DIR = bundled_frontend()
+UPLOAD_DIR = upload_dir()
 
 
 def _verify_token(x_token: str | None = None) -> None:
@@ -197,8 +199,7 @@ async def proxy_avatar(url: str):
         raise HTTPException(502)
 
 
-UPLOAD_DIR = FRONTEND_DIR / "uploads"
-UPLOAD_DIR.mkdir(exist_ok=True)
+UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 @app.post("/api/upload")
