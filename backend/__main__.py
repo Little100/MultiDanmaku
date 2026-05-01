@@ -7,9 +7,17 @@ Admin panel: http://127.0.0.1:9800/admin
 from __future__ import annotations
 
 import argparse
+import os
 import sys
+import pathlib
 
 import uvicorn
+
+# Point Playwright to the bundled browsers inside the PyInstaller package.
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
+    os.environ["PLAYWRIGHT_BROWSERS_PATH"] = str(
+        pathlib.Path(sys._MEIPASS) / "playwright" / "driver" / "package" / ".local-browsers"
+    )
 
 
 def main() -> None:

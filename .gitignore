@@ -10,6 +10,7 @@ venv/
 env/
 node_modules/
 config.json
+.playwright-browsers/
 frontend/uploads/
 *.log
 .DS_Store
