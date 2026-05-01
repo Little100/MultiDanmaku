@@ -34,6 +34,7 @@ interface AppConfig {
     filter_keywords: string[];
     blacklist_users: string[];
     min_content_length: number;
+    msg_lifetime: number;
   };
   custom_css: string;
   css_template: string;
@@ -57,7 +58,9 @@ async function loadConfig(): Promise<void> {
     const resp = await fetch("/api/config");
     config = (await resp.json()) as AppConfig;
     injectCustomCss(config.custom_css);
-    applyScrollDirection(config.display.scroll_direction);
+    applyScrollDirection();
+    const lt = config.display.msg_lifetime ?? 10;
+    container.style.setProperty("--msg-lifetime", lt + "s");
   } catch (e) {
     console.error("Failed to load config:", e);
   }
@@ -67,8 +70,9 @@ function injectCustomCss(css: string): void {
   customStyle.textContent = css;
 }
 
-function applyScrollDirection(direction: string): void {
-  container.style.flexDirection = direction === "down" ? "column" : "column-reverse";
+function applyScrollDirection(): void {
+  // column-reverse: newest at bottom (DOM[0]), oldest at top (last DOM child)
+  container.style.flexDirection = "column-reverse";
 }
 
 function getPlatformDisplay(platform: string): PlatformDisplay {
@@ -176,12 +180,21 @@ function createMessageEl(event: LiveEvent): HTMLDivElement {
 function appendMessage(event: LiveEvent): void {
   if (!shouldShow(event)) return;
   const el = createMessageEl(event);
-  container.appendChild(el);
+  // column-reverse: prepend → newest at DOM[0] → visually at BOTTOM
+  // Older messages get pushed UP, oldest is the last DOM child (visually at TOP)
+  container.insertBefore(el, container.firstChild);
+  // Remove oldest (last DOM child = visually at top)
   const max = config?.display.max_messages ?? 200;
   while (container.children.length > max) {
-    container.removeChild(container.children[0]);
+    container.removeChild(container.lastChild as ChildNode);
   }
-  container.scrollTop = container.scrollHeight;
+  // Auto-remove after lifetime
+  const lt = (config?.display.msg_lifetime ?? 10) * 1000;
+  if (lt > 0) {
+    setTimeout(() => {
+      if (el.parentNode) el.parentNode.removeChild(el);
+    }, lt);
+  }
 }
 
 function connect(): void {
@@ -208,6 +221,6 @@ function connect(): void {
     const oldScroll = config?.display.scroll_direction;
     await loadConfig();
     if (config && oldCss !== config.custom_css) injectCustomCss(config.custom_css);
-    if (config && oldScroll !== config.display.scroll_direction) applyScrollDirection(config.display.scroll_direction);
+    if (config && oldScroll !== config.display.scroll_direction) applyScrollDirection();
   }, 30_000);
 })();

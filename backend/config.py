@@ -38,6 +38,7 @@ class DisplayConfig:
     filter_keywords: list[str] = field(default_factory=list)
     blacklist_users: list[str] = field(default_factory=list)
     min_content_length: int = 0
+    msg_lifetime: int = 10  # seconds, 0 = no auto-hide
 
 
 def _default_platform(name: str) -> PlatformConfig:
@@ -92,6 +93,7 @@ class AppConfig:
                 "filter_keywords": self.display.filter_keywords,
                 "blacklist_users": self.display.blacklist_users,
                 "min_content_length": self.display.min_content_length,
+                "msg_lifetime": self.display.msg_lifetime,
             },
             "custom_css": self.custom_css,
             "css_template": self.css_template,

@@ -242,39 +242,42 @@ async def websocket_endpoint(ws: WebSocket):
 
 # -- Frontend pages --------------------------------------------------------
 
+_NO_CACHE = {"Cache-Control": "no-cache, no-store, must-revalidate", "Pragma": "no-cache", "Expires": "0"}
+
+
 @app.get("/")
 async def index():
     """OBS source page — always accessible, no token required."""
-    return FileResponse(FRONTEND_DIR / "index.html")
+    return FileResponse(FRONTEND_DIR / "index.html", headers=_NO_CACHE)
 
 
 @app.get("/app.js")
 async def app_js():
-    return FileResponse(FRONTEND_DIR / "app.js", media_type="application/javascript")
+    return FileResponse(FRONTEND_DIR / "app.js", media_type="application/javascript", headers=_NO_CACHE)
 
 
 @app.get("/templates/{filename}")
 async def css_template(filename: str):
     path = FRONTEND_DIR / "templates" / filename
     if path.exists() and path.suffix == ".css":
-        return FileResponse(path, media_type="text/css")
+        return FileResponse(path, media_type="text/css", headers=_NO_CACHE)
     return HTMLResponse("Not Found", status_code=404)
 
 
 @app.get("/admin")
 async def admin_page():
     """Admin panel page — token gate handled client-side."""
-    return FileResponse(FRONTEND_DIR / "admin.html")
+    return FileResponse(FRONTEND_DIR / "admin.html", headers=_NO_CACHE)
 
 
 @app.get("/admin.js")
 async def admin_js():
-    return FileResponse(FRONTEND_DIR / "admin.js", media_type="application/javascript")
+    return FileResponse(FRONTEND_DIR / "admin.js", media_type="application/javascript", headers=_NO_CACHE)
 
 
 @app.get("/overlay")
 async def overlay_page():
-    return FileResponse(FRONTEND_DIR / "overlay.html")
+    return FileResponse(FRONTEND_DIR / "overlay.html", headers=_NO_CACHE)
 
 
 @app.get("/uploads/{filename}")
